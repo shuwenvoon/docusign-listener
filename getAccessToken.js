@@ -4,8 +4,8 @@ const path = require('path');
 
 const privateKeyPath = path.join(__dirname, 'private.key'); // Update if your key has a different name
 
-const clientId = 'YOUR_INTEGRATION_KEY';
-const userId = 'YOUR_USER_ID_GUID';
+const clientId = '57470690-59bf-477c-96c3-57721da9dce0';
+const userId = 'f1ba7faf-fc5d-4b50-a591-09bdc1ba2714';
 const authServer = 'account-d.docusign.com'; // Demo environment
 const scopes = ['signature', 'impersonation'];
 
