@@ -4,6 +4,8 @@ const axios = require('axios');
 const xml2js = require('xml2js');
 
 const app = express();
+
+// Allow large XML payloads
 app.use(bodyParser.text({ type: '*/*', limit: '5mb' }));
 
 const DOCUSIGN_TOKEN = process.env.DOCUSIGN_TOKEN;
@@ -14,27 +16,42 @@ app.post('/webhook', async (req, res) => {
   const xml = req.body;
 
   xml2js.parseString(xml, async (err, result) => {
-    if (err) return res.status(400).send('Invalid XML');
+    if (err) {
+      console.error('Error parsing XML:', err.message);
+      return res.status(400).send('Invalid XML');
+    }
 
     try {
-      const envelopeId = result.DocuSignEnvelopeInformation.EnvelopeStatus[0].EnvelopeID[0];
+      const envelopeId = result?.DocuSignEnvelopeInformation?.EnvelopeStatus?.[0]?.EnvelopeID?.[0];
 
-      await axios.post(
-        `https://demo.docusign.net/restapi/v2.1/accounts/${DOCUSIGN_ACCOUNT_ID}/envelopes/${envelopeId}`,
-        { status: 'voided', voidedReason: VOID_REASON },
-        {
-          headers: {
-            Authorization: `Bearer ${DOCUSIGN_TOKEN}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      if (!envelopeId) {
+        console.error('Envelope ID not found in XML payload.');
+        return res.status(400).send('Envelope ID missing');
+      }
 
-      console.log(`Envelope ${envelopeId} voided.`);
+      const url = `https://demo.docusign.net/restapi/v2.1/accounts/${DOCUSIGN_ACCOUNT_ID}/envelopes/${envelopeId}`;
+      const body = {
+        status: 'voided',
+        voidedReason: VOID_REASON,
+      };
+
+      console.log('Voiding envelope:', envelopeId);
+      console.log('Sending request to:', url);
+      console.log('Payload:', body);
+
+      await axios.post(url, body, {
+        headers: {
+          Authorization: `Bearer ${DOCUSIGN_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log(`Envelope ${envelopeId} voided successfully.`);
       res.status(200).send('OK');
     } catch (e) {
-      console.error('Error voiding envelope:', e.message);
-      res.status(500).send('Error');
+      const errorDetails = e.response?.data || e.message;
+      console.error('Error voiding envelope:', errorDetails);
+      res.status(500).send('Error voiding envelope');
     }
   });
 });
