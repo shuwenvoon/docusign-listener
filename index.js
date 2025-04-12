@@ -4,8 +4,6 @@ const axios = require('axios');
 const xml2js = require('xml2js');
 
 const app = express();
-
-// Allow large XML payloads
 app.use(bodyParser.text({ type: '*/*', limit: '5mb' }));
 
 const DOCUSIGN_TOKEN = process.env.DOCUSIGN_TOKEN;
@@ -25,9 +23,11 @@ app.post('/webhook', async (req, res) => {
       const envelopeId = result?.DocuSignEnvelopeInformation?.EnvelopeStatus?.[0]?.EnvelopeID?.[0];
 
       if (!envelopeId) {
-        console.error('Envelope ID not found in XML payload.');
+        console.error('Envelope ID not found.');
         return res.status(400).send('Envelope ID missing');
       }
+
+      console.log('Voiding envelope:', envelopeId);
 
       const url = `https://demo.docusign.net/restapi/v2.1/accounts/${DOCUSIGN_ACCOUNT_ID}/envelopes/${envelopeId}`;
       const body = {
@@ -35,11 +35,10 @@ app.post('/webhook', async (req, res) => {
         voidedReason: VOID_REASON,
       };
 
-      console.log('Voiding envelope:', envelopeId);
-      console.log('Sending request to:', url);
+      console.log('PUT request to:', url);
       console.log('Payload:', body);
 
-      await axios.post(url, body, {
+      await axios.put(url, body, {
         headers: {
           Authorization: `Bearer ${DOCUSIGN_TOKEN}`,
           'Content-Type': 'application/json',
