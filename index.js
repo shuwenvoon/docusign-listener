@@ -4,7 +4,7 @@ const axios = require('axios');
 const xml2js = require('xml2js');
 
 const app = express();
-app.use(bodyParser.text({ type: '*/*' }));
+app.use(bodyParser.text({ type: '*/*', limit: '5mb' }));
 
 const DOCUSIGN_TOKEN = process.env.DOCUSIGN_TOKEN;
 const DOCUSIGN_ACCOUNT_ID = process.env.DOCUSIGN_ACCOUNT_ID;
