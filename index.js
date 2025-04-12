@@ -2,16 +2,17 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
 const xml2js = require('xml2js');
+const getAccessToken = require('./getAccessToken');
+
 
 const app = express();
 app.use(bodyParser.text({ type: '*/*', limit: '5mb' }));
-
-const DOCUSIGN_TOKEN = process.env.DOCUSIGN_TOKEN;
 const DOCUSIGN_ACCOUNT_ID = process.env.DOCUSIGN_ACCOUNT_ID;
 const VOID_REASON = 'Auto-voided by webhook';
 
 app.post('/webhook', async (req, res) => {
   const xml = req.body;
+  const accessToken = await getAccessToken();
 
   xml2js.parseString(xml, async (err, result) => {
     if (err) {
@@ -40,7 +41,7 @@ app.post('/webhook', async (req, res) => {
 
       await axios.put(url, body, {
         headers: {
-          Authorization: `Bearer ${DOCUSIGN_TOKEN}`,
+           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
       });
